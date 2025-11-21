@@ -11,5 +11,6 @@ router.get('/', (req, res) => {
 router.use('/auth', require('../auth'));
 router.use('/credentials', require('../credentials'));
 router.use('/credentialVersion', require('../credentialVersion'));
+router.use('/sharedCredentials', require('../sharedCredentials'));
 
 module.exports = router;
