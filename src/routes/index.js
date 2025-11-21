@@ -10,5 +10,6 @@ router.get('/', (req, res) => {
 // Auth routes
 router.use('/auth', require('../auth'));
 router.use('/credentials', require('../credentials'));
+router.use('/credentialVersion', require('../credentialVersion'));
 
 module.exports = router;

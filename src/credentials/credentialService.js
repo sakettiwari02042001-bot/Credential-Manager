@@ -1,6 +1,7 @@
 const Credential = require('../DML/models/credentials');
 const { Op } = require('sequelize');
 const { encrypt, decrypt } = require('./encryption');
+const { createCredentialVersionInternal, deleteAllCredentialVersions } = require('../credentialVersion/credentialVersionService');
 
 async function createCredential(userId, { username, password, notes, tags, expires_at }) {
   const encryptedPassword = encrypt(password);
@@ -98,6 +99,11 @@ async function updateCredentialByID(userId, credentialId, { username, password, 
     return null;
   }
 
+  // Store old values for version history before updating
+  const oldEncryptedPassword = credential.encrypted_password;
+  const oldNotes = credential.notes;
+  const oldTags = credential.tags;
+
   const updateData = {};
   if (username !== undefined) updateData.username = username;
   if (password !== undefined) updateData.encrypted_password = encrypt(password);
@@ -106,6 +112,32 @@ async function updateCredentialByID(userId, credentialId, { username, password, 
   if (expires_at !== undefined) updateData.expires_at = expires_at;
 
   await credential.update(updateData);
+
+  // Create version history asynchronously (non-blocking)
+  // Only create version if password, notes, or tags changed
+  const shouldCreateVersion = 
+    (password !== undefined && oldEncryptedPassword !== updateData.encrypted_password) ||
+    (notes !== undefined && oldNotes !== notes) ||
+    (tags !== undefined && oldTags !== tags);
+
+  if (shouldCreateVersion) {
+    // Fire and forget - don't wait for version creation
+    createCredentialVersionInternal(credentialId, {
+      encrypted_password: oldEncryptedPassword,
+      notes: oldNotes,
+      tags: oldTags,
+    })
+      .then(version => {
+        if (version) {
+          console.log(`Version ${version.version} created for credential ${credentialId}`);
+        } else {
+          console.error(`Failed to create version for credential ${credentialId}: returned null`);
+        }
+      })
+      .catch(err => {
+        console.error(`Failed to create credential version (async) for credential ${credentialId}:`, err);
+      });
+  }
 
   return {
     id: credential.id,
@@ -132,6 +164,10 @@ async function deleteCredentialByID(userId, credentialId) {
     return false;
   }
 
+  // Delete all versions first (maintain sync)
+  await deleteAllCredentialVersions(credentialId);
+  
+  // Then delete the credential
   await credential.destroy();
   return true;
 }

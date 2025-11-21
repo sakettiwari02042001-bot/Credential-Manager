@@ -13,7 +13,6 @@ const {
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
-// POST /credentials - Create a new credential
 router.post('/createCredential', async (req, res) => {
   try {
     const { username, password, notes, tags, expires_at } = req.body;
@@ -46,7 +45,6 @@ router.post('/createCredential', async (req, res) => {
   }
 });
 
-// GET /credentials - Get all credentials for the authenticated user
 router.get('/getAllCredentials', async (req, res) => {
   try {
     const userId = req.user.id;
@@ -57,7 +55,6 @@ router.get('/getAllCredentials', async (req, res) => {
   }
 });
 
-// GET /credentials/tag/:tag - Get credentials by tag
 router.get('/getCredentialByTag/:tag', async (req, res) => {
   try {
     const userId = req.user.id;
@@ -74,7 +71,6 @@ router.get('/getCredentialByTag/:tag', async (req, res) => {
   }
 });
 
-// GET /credentials/:id - Get credential by ID
 router.get('/getCredentialByID/:id', async (req, res) => {
   try {
     const userId = req.user.id;
@@ -96,7 +92,6 @@ router.get('/getCredentialByID/:id', async (req, res) => {
   }
 });
 
-// PUT /credentials/:id - Update credential by ID
 router.put('/updateCredentialByID/:id', async (req, res) => {
   try {
     const userId = req.user.id;
